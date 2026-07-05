@@ -1,6 +1,6 @@
 /* App Layout */
 .app {
-  max-width: 1400px;
+  max-width: min(1760px, 95vw);
   margin: 0 auto;
   padding: 1rem;
   min-height: 100vh;
@@ -1249,8 +1249,8 @@
 
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(150px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(7, minmax(190px, 1fr));
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
@@ -1334,10 +1334,10 @@
 
 .meal-selector select {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.6rem 0.7rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -1349,10 +1349,10 @@
 
 .searchable-select-trigger {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.6rem 0.7rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   background: var(--bg-primary);
   color: var(--text-primary);
   cursor: pointer;
@@ -1367,16 +1367,22 @@
   border-color: var(--primary-color);
 }
 
+.searchable-select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 25%, transparent);
+}
+
 .select-placeholder {
   color: var(--text-secondary);
   opacity: 0.75;
 }
 
 .select-arrow {
-  font-size: 0.6rem;
-  color: var(--text-secondary);
+  font-size: 0.7rem;
+  color: var(--primary-color);
   flex-shrink: 0;
-  margin-left: 0.25rem;
+  margin-left: 0.5rem;
 }
 
 .searchable-select-dropdown {
