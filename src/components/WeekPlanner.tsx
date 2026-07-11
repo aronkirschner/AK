@@ -76,6 +76,14 @@ function buildCustomValue(name: string, url: string): string {
   return CUSTOM_PREFIX + JSON.stringify({ name, url });
 }
 
+// Lowercase and strip diacritics so "creme" matches "Crème", etc.
+function normalizeForSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 interface MealSelectorProps {
   label: string;
   /** Meal slot, used purely for category color-coding. */
@@ -130,7 +138,8 @@ function MealSelector({ label, category, value, recipes, onChange }: MealSelecto
   const handleSelect = (newValue: string) => {
     if (newValue === '__custom__') {
       setShowCustomInput(true);
-      onChange(buildCustomValue('', ''));
+      // Seed the custom entry with whatever the user has typed so far.
+      onChange(buildCustomValue(search.trim(), ''));
     } else {
       setShowCustomInput(false);
       onChange(newValue);
@@ -146,9 +155,15 @@ function MealSelector({ label, category, value, recipes, onChange }: MealSelecto
   }, [value, recipes, isCustom]);
 
   const filteredRecipes = useMemo(() => {
-    if (!search) return recipes;
-    const lower = search.toLowerCase();
-    return recipes.filter((r) => r.name.toLowerCase().includes(lower));
+    const query = search.trim();
+    if (!query) return recipes;
+    // Accent-insensitive, multi-term search: every whitespace-separated term
+    // must appear somewhere in the name (order-independent, matches the middle).
+    const terms = normalizeForSearch(query).split(/\s+/);
+    return recipes.filter((r) => {
+      const name = normalizeForSearch(r.name);
+      return terms.every((term) => name.includes(term));
+    });
   }, [recipes, search]);
 
   return (
@@ -235,7 +250,7 @@ function MealSelector({ label, category, value, recipes, onChange }: MealSelecto
                   className="searchable-select-option option-custom"
                   onClick={() => handleSelect('__custom__')}
                 >
-                  Custom...
+                  {search.trim() ? `Use "${search.trim()}" as custom` : 'Custom...'}
                 </button>
                 {filteredRecipes.map((r) => (
                   <button
@@ -252,8 +267,10 @@ function MealSelector({ label, category, value, recipes, onChange }: MealSelecto
                     )}
                   </button>
                 ))}
-                {filteredRecipes.length === 0 && search && (
-                  <div className="searchable-select-empty">No recipes found</div>
+                {filteredRecipes.length === 0 && search.trim() && (
+                  <div className="searchable-select-empty">
+                    No recipes found — use the custom option above
+                  </div>
                 )}
               </div>
             </div>
