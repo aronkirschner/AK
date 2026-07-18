@@ -19,5 +19,16 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // eslint-plugin-react-hooks v7 ships the React Compiler lint rules as
+      // errors in its recommended config. They target codebases adopting the
+      // React Compiler, which this project is not (yet). The patterns they flag
+      // here — data-loading effects, prop→state sync, reading Date.now() in an
+      // event handler — are intentional, so surface them as warnings rather
+      // than build-blocking errors.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
   },
 ])

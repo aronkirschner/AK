@@ -19,6 +19,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// The useAuth hook is intentionally colocated with its provider; splitting it
+// into a separate module purely to satisfy Fast Refresh isn't worth the churn.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

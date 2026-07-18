@@ -148,7 +148,7 @@ Rules:
       // Remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
       plan = JSON.parse(cleanContent);
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response:', content);
       return res.status(500).json({ error: 'Failed to parse meal plan response' });
     }

@@ -39,6 +39,12 @@
     "ajv": ">=8.18.0",
     "minimatch": ">=9.0.7",
     "smol-toml": ">=1.6.1",
-    "brace-expansion": ">=1.1.13"
+    "brace-expansion": ">=1.1.13",
+    "eslint": {
+      "ajv": "^6.12.6"
+    },
+    "@eslint/eslintrc": {
+      "ajv": "^6.12.6"
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Recipe, RecipeCategory, DayMeal } from '../types';
 import {
   getCommunityRecipes,
@@ -63,11 +63,7 @@ export function CommunityRecipes({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [popularRecipes, setPopularRecipes] = useState<PopularRecipe[]>([]);
 
-  useEffect(() => {
-    loadCommunityRecipes();
-  }, [familyId]);
-
-  const loadCommunityRecipes = async () => {
+  const loadCommunityRecipes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -138,7 +134,11 @@ export function CommunityRecipes({
     } finally {
       setLoading(false);
     }
-  };
+  }, [familyId]);
+
+  useEffect(() => {
+    loadCommunityRecipes();
+  }, [loadCommunityRecipes]);
 
   const handleAddRecipe = async (recipe: Recipe) => {
     setAddingId(recipe.id);
