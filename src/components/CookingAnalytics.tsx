@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Recipe, WeekPlan, RecipeCategory, DayMeal, DayOfWeek } from '../types';
 import { getWeekPlans } from '../firestore-storage';
 import { CSVImportPreview } from './CSVImportPreview';
@@ -126,7 +126,7 @@ export function CookingAnalytics({ recipes, familyId }: CookingAnalyticsProps) {
   const [showImport, setShowImport] = useState(false);
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async () => {
     setLoading(true);
     try {
       const plans = await getWeekPlans(familyId);
@@ -136,11 +136,11 @@ export function CookingAnalytics({ recipes, familyId }: CookingAnalyticsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [familyId]);
 
   useEffect(() => {
     loadPlans();
-  }, [familyId]);
+  }, [loadPlans]);
 
   const handleImportComplete = async () => {
     setShowImport(false);

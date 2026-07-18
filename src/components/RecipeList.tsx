@@ -87,22 +87,24 @@ function AddToWeekPicker({ recipe, onAdd, onClose }: {
   const ref = useRef<HTMLDivElement>(null);
 
   const thisSaturday = getSaturday(new Date());
+  const thisSaturdayTime = thisSaturday.getTime();
   const selectedSaturday = useMemo(() => {
-    const d = new Date(thisSaturday);
+    const d = new Date(thisSaturdayTime);
     d.setDate(d.getDate() + weekOffset * 7);
     return d;
-  }, [thisSaturday.getTime(), weekOffset]);
+  }, [thisSaturdayTime, weekOffset]);
 
   const weekStart = formatDateISO(selectedSaturday);
 
+  const selectedSaturdayTime = selectedSaturday.getTime();
   const dayDates = useMemo(() => {
     return DAYS_OF_WEEK.map((d, i) => {
-      const date = new Date(selectedSaturday);
+      const date = new Date(selectedSaturdayTime);
       date.setDate(date.getDate() + i);
       const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       return { key: d, label: `${DAY_LABELS[d]} ${label}` };
     });
-  }, [selectedSaturday.getTime()]);
+  }, [selectedSaturdayTime]);
 
   const weekEnd = new Date(selectedSaturday);
   weekEnd.setDate(weekEnd.getDate() + 6);
