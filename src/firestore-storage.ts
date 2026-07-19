@@ -243,8 +243,7 @@ function legacySundayKey(saturdayKey: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export async function getWeekPlan(familyId: string, weekStart: string): Promise<WeekPlan | undefined> {
-  const plans = await getWeekPlans(familyId);
+export function pickWeekPlan(plans: WeekPlan[], weekStart: string): WeekPlan | undefined {
   // Fall back to Sunday-based key for plans saved before the Saturday week-start migration
   const legacyKey = legacySundayKey(weekStart);
   const matches = plans.filter((p) => p.weekStart === weekStart || p.weekStart === legacyKey);
@@ -265,6 +264,11 @@ export async function getWeekPlan(familyId: string, weekStart: string): Promise<
     };
     return count(plan) > count(best) ? plan : best;
   });
+}
+
+export async function getWeekPlan(familyId: string, weekStart: string): Promise<WeekPlan | undefined> {
+  const plans = await getWeekPlans(familyId);
+  return pickWeekPlan(plans, weekStart);
 }
 
 export async function saveWeekPlan(familyId: string, plan: WeekPlan): Promise<void> {

@@ -10,7 +10,7 @@ import {
 
 interface CommunityRecipesProps {
   familyId: string;
-  onRecipeAdded: () => void;
+  onRecipeAdded?: () => void;
 }
 
 interface CommunityRecipe {
@@ -150,7 +150,7 @@ export function CommunityRecipes({
       };
       await addRecipe(familyId, newRecipe);
       setAddedIds((prev) => new Set(prev).add(recipe.id));
-      onRecipeAdded();
+      onRecipeAdded?.();
     } catch (err) {
       console.error('Error adding recipe:', err);
       alert('Failed to add recipe');
