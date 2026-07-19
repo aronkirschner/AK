@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Recipe, WeekPlan, Family, DayMeal, DayOfWeek } from './types';
 import { inferCuisineType } from './types';
 import {
@@ -6,11 +6,12 @@ import {
   updateRecipe,
   deleteRecipe,
   saveWeekPlan,
-  getRecipes,
-  getWeekPlans,
   getWeekPlan,
+  pickWeekPlan,
   getFamily,
   generateId,
+  subscribeToRecipes,
+  subscribeToWeekPlans,
 } from './firestore-storage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { Login } from './components/Login';
@@ -64,38 +65,49 @@ function MealPlannerApp() {
     }
   }, [appUser?.familyId, family, setFamily]);
 
-  // Function to load data (can be called to refresh)
-  const loadData = useCallback(async () => {
-    if (!family) {
-      setDataLoading(false);
-      return;
-    }
-
-    try {
-      // Fetch recipes
-      const fetchedRecipes = await getRecipes(family.id);
-      setRecipes(fetchedRecipes);
-
-      // Fetch week plans
-      const fetchedPlans = await getWeekPlans(family.id);
-      setAllWeekPlans(fetchedPlans);
-      const weekStart = formatDate(getSaturday(new Date()));
-      // Use getWeekPlan which deduplicates if multiple docs exist for the same week
-      const plan = await getWeekPlan(family.id, weekStart);
-      if (plan) {
-        setCurrentWeekPlan(plan);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setDataLoading(false);
-    }
-  }, [family]);
-
-  // Load data when family changes
+  // Subscribe to realtime recipe and week plan data. Snapshots arrive from the
+  // persistent cache first (instant on launch) and re-sync automatically when
+  // the network comes back — no manual refetching needed.
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!family) return;
+
+    setDataLoading(true);
+    let recipesReady = false;
+    let plansReady = false;
+    const checkReady = () => {
+      if (recipesReady && plansReady) setDataLoading(false);
+    };
+
+    const unsubscribeRecipes = subscribeToRecipes(family.id, (fetched) => {
+      setRecipes(fetched);
+      recipesReady = true;
+      checkReady();
+    });
+
+    // Seed the current week's plan from the first snapshot only. Later
+    // snapshots still update allWeekPlans, but must not reset currentWeekPlan:
+    // WeekPlanner discards its local edits and navigation whenever that prop
+    // changes.
+    let currentWeekSeeded = false;
+    const unsubscribePlans = subscribeToWeekPlans(family.id, (plans) => {
+      setAllWeekPlans(plans);
+      if (!currentWeekSeeded) {
+        currentWeekSeeded = true;
+        const weekStart = formatDate(getSaturday(new Date()));
+        const plan = pickWeekPlan(plans, weekStart);
+        if (plan) {
+          setCurrentWeekPlan(plan);
+        }
+      }
+      plansReady = true;
+      checkReady();
+    });
+
+    return () => {
+      unsubscribeRecipes();
+      unsubscribePlans();
+    };
+  }, [family]);
 
   // Compute recipe cook counts from all week plans
   const recipeCookCounts = useMemo(() => {
@@ -147,9 +159,6 @@ function MealPlannerApp() {
     if (toUpdate.length === 0) return;
 
     Promise.all(toUpdate.map(r => updateRecipe(family.id, r)))
-      .then(() => {
-        setRecipes(prev => prev.map(r => toUpdate.find(u => u.id === r.id) ?? r));
-      })
       .catch(err => console.error('Failed to auto-assign cuisine types:', err));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family?.id, recipes.length]);
@@ -158,9 +167,6 @@ function MealPlannerApp() {
     if (!family) return;
     try {
       await addRecipe(family.id, recipe);
-      // Refresh data after adding
-      const fetchedRecipes = await getRecipes(family.id);
-      setRecipes(fetchedRecipes);
       setShowAddForm(false);
     } catch (error) {
       console.error('Failed to add recipe:', error);
@@ -172,9 +178,6 @@ function MealPlannerApp() {
     if (!family) return;
     try {
       await updateRecipe(family.id, recipe);
-      // Refresh data after updating
-      const fetchedRecipes = await getRecipes(family.id);
-      setRecipes(fetchedRecipes);
     } catch (error) {
       console.error('Failed to update recipe:', error);
       alert('Failed to update recipe. Check console for details.');
@@ -185,9 +188,6 @@ function MealPlannerApp() {
     if (!family) return;
     try {
       await deleteRecipe(family.id, id);
-      // Refresh data after deleting
-      const fetchedRecipes = await getRecipes(family.id);
-      setRecipes(fetchedRecipes);
     } catch (error) {
       console.error('Failed to delete recipe:', error);
       alert('Failed to delete recipe. Check console for details.');
@@ -242,12 +242,6 @@ function MealPlannerApp() {
     setFamily(selectedFamily);
   };
 
-  const handleCommunityRecipeAdded = async () => {
-    if (!family) return;
-    const fetchedRecipes = await getRecipes(family.id);
-    setRecipes(fetchedRecipes);
-  };
-
   const handleImportRecipes = async (recipesToImport: Recipe[]) => {
     if (!family) return;
 
@@ -255,10 +249,6 @@ function MealPlannerApp() {
     for (const recipe of recipesToImport) {
       await addRecipe(family.id, recipe);
     }
-
-    // Refresh the recipes list
-    const fetchedRecipes = await getRecipes(family.id);
-    setRecipes(fetchedRecipes);
   };
 
   // Show loading state
@@ -437,10 +427,7 @@ function MealPlannerApp() {
 
         {activeTab === 'community' && (
           <div className="community-tab">
-            <CommunityRecipes
-              familyId={family.id}
-              onRecipeAdded={handleCommunityRecipeAdded}
-            />
+            <CommunityRecipes familyId={family.id} />
           </div>
         )}
       </main>
