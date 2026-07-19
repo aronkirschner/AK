@@ -679,7 +679,17 @@ export function WeekPlanner({ recipes, weekPlan, onSave, onLoadWeekPlan, cookCou
                         <li key={m.label} className="week-glance-meal">
                           <span className="week-glance-meal-label">{m.label}</span>
                           <span className="week-glance-recipe-row">
-                            {recipe && onViewRecipe ? (
+                            {recipe && recipe.url ? (
+                              <a
+                                href={recipe.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="week-glance-recipe-link"
+                                title={recipe.url}
+                              >
+                                {displayName}
+                              </a>
+                            ) : recipe && onViewRecipe ? (
                               <button
                                 className="week-glance-recipe-link"
                                 onClick={() => onViewRecipe(recipe.id)}
