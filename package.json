@@ -34,7 +34,7 @@
     "protobufjs": ">=8.6.5",
     "@protobufjs/utf8": ">=1.1.1",
     "undici": ">=8.9.0",
-    "js-yaml": ">=4.2.0 <5.0.0",
+    "js-yaml": ">=4.3.1 <5.0.0",
     "path-to-regexp": ">=6.3.0",
     "ajv": ">=8.18.0",
     "minimatch": ">=9.0.7",
